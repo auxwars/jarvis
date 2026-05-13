@@ -24,6 +24,56 @@ DATA_DIR.mkdir(exist_ok=True)
 MEMORY_FILE   = DATA_DIR / 'memory.json'
 HOMEWORK_FILE = DATA_DIR / 'homework.json'
 
+DEFAULT_MEMORY = {
+    "name": "Samuel",
+    "nickname": "Sam",
+    "school": "Brown Middle School, Newton, MA",
+    "zip": "02459",
+    "city": "Newton, MA",
+    "grade_level": "Middle school",
+    "academic_program": "Johns Hopkins CTY (Center for Talented Youth) — gifted/advanced program",
+    "interests": [
+        "robotics and Arduino",
+        "3D printing and CAD design",
+        "rocketry and rocket simulation (OpenRocket, RockSim)",
+        "quantum physics — specifically NV-diamond quantum magnetometers",
+        "electronics and PCB design (Eagle, EasyEDA, KiCad)",
+        "gaming — especially Forza Horizon 5",
+        "coding and software development",
+        "optics and laser physics",
+        "MATLAB and scientific computing"
+    ],
+    "academic_strengths": [
+        "physics — reading college-level textbooks (Serway, Halliday)",
+        "mathematics — Algebra 2 through CTY",
+        "engineering and hands-on building",
+        "quantum research — has done real NV-center magnetometer research"
+    ],
+    "tools_and_software": [
+        "Arduino IDE", "VS Code", "Blender", "Fusion 360",
+        "KiCad / EasyEDA / Eagle", "OpenRocket / RockSim", "MATLAB", "GitHub"
+    ],
+    "gaming": ["Forza Horizon 5", "Minecraft", "Roblox", "Steam"],
+    "hardware": [
+        "Gaming PC with Nvidia GPU",
+        "Razer Leviathan V2 Pro soundbar",
+        "3D printer",
+        "Arduino boards"
+    ],
+    "personality_notes": [
+        "Direct and impatient — gets frustrated when things are over-explained",
+        "Smart and picks things up fast",
+        "Casually funny and sarcastic",
+        "Doesn't like being talked down to"
+    ],
+    "current_setup": "Windows PC, Python 3.14, runs Jarvis locally at localhost:5000",
+    "advanced_topics": "Has done actual quantum physics research on NV-center magnetometers — way beyond grade level"
+}
+
+# Pre-seed memory on first run
+if not MEMORY_FILE.exists():
+    MEMORY_FILE.write_text(json.dumps(DEFAULT_MEMORY, indent=2))
+
 def load_json(path, default):
     try:
         if path.exists():
