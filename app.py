@@ -67,7 +67,16 @@ DEFAULT_MEMORY = {
         "Doesn't like being talked down to"
     ],
     "current_setup": "Windows PC, Python 3.14, runs Jarvis locally at localhost:5000",
-    "advanced_topics": "Has done actual quantum physics research on NV-center magnetometers — way beyond grade level"
+    "advanced_topics": "Has done actual quantum physics research on NV-center magnetometers — way beyond grade level",
+    "family": {
+        "mom": "Yana",
+        "dad": "Vlad",
+        "brothers": [
+            {"name": "Michael", "age": 17},
+            {"name": "Tal", "age": 10}
+        ],
+        "dog": {"name": "Apollo", "age": 3}
+    }
 }
 
 # Pre-seed memory on first run
