@@ -193,7 +193,7 @@ def execute_tool(name, inputs):
 
             if kind == "website":
                 url = target if target.startswith("http") else "https://" + target
-                webbrowser.open(url)
+                subprocess.Popen(f'start "" "{url}"', shell=True)
                 return f"Opened {url} in your browser."
 
             elif kind == "app":
