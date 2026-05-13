@@ -1,4 +1,4 @@
-import os, json, re, platform, psutil, webbrowser, subprocess
+import os, json, re, platform, psutil, subprocess
 import requests as http_requests
 from datetime import datetime
 from pathlib import Path
@@ -123,6 +123,22 @@ TOOLS = [
         },
     },
     {
+        "name": "read_gmail",
+        "description": (
+            "Read and summarize the user's Gmail inbox. "
+            "Use when the user asks to check email, summarize emails, or read Gmail. "
+            "Requires Gmail to be set up — if not set up, explain how."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "count": {"type": "integer", "description": "Number of emails to fetch (default 5)"},
+                "query": {"type": "string", "description": "Optional Gmail search query like 'is:unread'"},
+            },
+            "required": [],
+        },
+    },
+    {
         "name": "remove_homework",
         "description": "Mark a homework item done and remove it by its number (0-based index).",
         "input_schema": {
@@ -134,6 +150,42 @@ TOOLS = [
         },
     },
 ]
+
+
+GMAIL_TOKEN = DATA_DIR / 'gmail_token.json'
+GMAIL_CREDS = Path(__file__).parent / 'credentials.json'
+GMAIL_SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
+
+def _find_chrome():
+    paths = [
+        r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+        os.path.expanduser(r"~\AppData\Local\Google\Chrome\Application\chrome.exe"),
+    ]
+    for p in paths:
+        if os.path.exists(p):
+            return p
+    return None
+
+def _get_gmail_service():
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    from google.auth.transport.requests import Request
+    from googleapiclient.discovery import build
+
+    creds = None
+    if GMAIL_TOKEN.exists():
+        creds = Credentials.from_authorized_user_file(str(GMAIL_TOKEN), GMAIL_SCOPES)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            if not GMAIL_CREDS.exists():
+                return None, "credentials.json not found"
+            flow = InstalledAppFlow.from_client_secrets_file(str(GMAIL_CREDS), GMAIL_SCOPES)
+            creds = flow.run_local_server(port=0)
+        GMAIL_TOKEN.write_text(creds.to_json())
+    return build('gmail', 'v1', credentials=creds), None
 
 
 def execute_tool(name, inputs):
@@ -193,31 +245,71 @@ def execute_tool(name, inputs):
 
             if kind == "website":
                 url = target if target.startswith("http") else "https://" + target
-                subprocess.Popen(f'start "" "{url}"', shell=True)
-                return f"Opened {url} in your browser."
+                chrome = _find_chrome()
+                if chrome:
+                    subprocess.Popen([chrome, url])
+                else:
+                    subprocess.Popen(f'start "" "{url}"', shell=True)
+                return f"Opened {url} in Chrome."
 
             elif kind == "app":
                 app_map = {
-                    "spotify":     "spotify",
-                    "discord":     "discord",
-                    "chrome":      "chrome",
-                    "calculator":  "calc",
-                    "notepad":     "notepad",
-                    "explorer":    "explorer",
+                    "spotify":      "spotify",
+                    "discord":      "discord",
+                    "chrome":       "chrome",
+                    "calculator":   "calc",
+                    "notepad":      "notepad",
+                    "explorer":     "explorer",
                     "file explorer":"explorer",
-                    "steam":       "steam",
-                    "vscode":      "code",
-                    "vs code":     "code",
-                    "minecraft":   "minecraft",
-                    "paint":       "mspaint",
-                    "word":        "winword",
-                    "excel":       "excel",
-                    "powerpoint":  "powerpnt",
-                    "task manager":"taskmgr",
+                    "steam":        "steam",
+                    "vscode":       "code",
+                    "vs code":      "code",
+                    "minecraft":    "minecraft",
+                    "paint":        "mspaint",
+                    "word":         "winword",
+                    "excel":        "excel",
+                    "powerpoint":   "powerpnt",
+                    "task manager": "taskmgr",
                 }
                 cmd = app_map.get(target.lower(), target)
                 subprocess.Popen(f'start {cmd}', shell=True)
                 return f"Launching {target}."
+
+        elif name == "read_gmail":
+            service, err = _get_gmail_service()
+            if err:
+                return (
+                    "Gmail is not set up yet. To enable it: "
+                    "1) Go to console.cloud.google.com, "
+                    "2) Create a project, enable Gmail API, "
+                    "3) Create OAuth2 Desktop credentials, "
+                    "4) Download as credentials.json and put it in the Jarvis folder. "
+                    "Then ask me to read Gmail again and a browser will open to log you in."
+                )
+            from googleapiclient.errors import HttpError
+            count = inputs.get("count", 5)
+            query = inputs.get("query", "")
+            msgs  = service.users().messages().list(
+                userId='me', maxResults=count, q=query
+            ).execute().get("messages", [])
+
+            if not msgs:
+                return "No emails found."
+
+            summaries = []
+            for m in msgs:
+                msg  = service.users().messages().get(
+                    userId='me', id=m['id'], format='metadata',
+                    metadataHeaders=['From','Subject','Date']
+                ).execute()
+                hdrs = {h['name']: h['value'] for h in msg['payload']['headers']}
+                snippet = msg.get('snippet', '')[:120]
+                summaries.append(
+                    f"From: {hdrs.get('From','?')}\n"
+                    f"Subject: {hdrs.get('Subject','?')}\n"
+                    f"Preview: {snippet}"
+                )
+            return "\n\n".join(summaries)
 
         elif name == "add_homework":
             hw = load_json(HOMEWORK_FILE, [])
@@ -288,6 +380,7 @@ def build_system_prompt():
         "Newton Public Schools uses a rotating Day 1 through Day 6 schedule.\n"
         "- When the user tells you something personal, USE save_memory.\n"
         "- When asked about homework, USE get_homework or add_homework.\n"
+        "- When asked to check or summarize emails, USE read_gmail.\n"
         "- When the user asks to open an app or website, USE open_app_or_website immediately. "
         "For 'search X on Google' open https://google.com/search?q=X. "
         "For 'open YouTube' open https://youtube.com. Never say you cannot open things.\n"
