@@ -114,6 +114,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     await sleep(200);
     greet();
+    // Start wake word mode immediately after boot
+    setTimeout(() => voice.startWakeWordMode(), 1500);
   }
 
   function greet() {
@@ -124,15 +126,11 @@ document.addEventListener('DOMContentLoaded', () => {
     voice.speak(msg);
     setStatus('READY');
 
-    // After Jarvis speaks, go back to wake word mode
     voice.onSpeakEnd = () => {
       hud.setTalking(false);
       if (!busy) {
-        setTimeout(() => {
-          voice.startWakeWordMode();
-          setMicActive(false);
-          setStatus('Say "Jarvis" to activate...');
-        }, 400);
+        setTimeout(() => voice.startWakeWordMode(), 400);
+        setStatus('Say "Jarvis" to activate...');
       }
     };
   }
@@ -340,9 +338,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     busy = false;
-
-    // Resume auto-listen after Jarvis finishes speaking
-    // (handled in voice.onSpeakEnd set in greet())
   }
 
   // ── Input handlers ─────────────────────────────────────
