@@ -124,14 +124,14 @@ document.addEventListener('DOMContentLoaded', () => {
     voice.speak(msg);
     setStatus('READY');
 
-    // Auto-start mic after greeting finishes
+    // After Jarvis speaks, go back to wake word mode
     voice.onSpeakEnd = () => {
       hud.setTalking(false);
-      if (autoListen && !busy) {
+      if (!busy) {
         setTimeout(() => {
-          voice.startListening();
-          setMicActive(true);
-          setStatus('LISTENING...');
+          voice.startWakeWordMode();
+          setMicActive(false);
+          setStatus('Say "Jarvis" to activate...');
         }, 400);
       }
     };
@@ -364,13 +364,11 @@ document.addEventListener('DOMContentLoaded', () => {
       sysMsg('Speech recognition not supported — try Chrome or Edge');
       return;
     }
-    if (voice.listening) {
-      autoListen = false;   // manual stop = turn off auto-listen
-      voice.stopListening();
+    if (voice._mode === 'active' && voice._shouldRun) {
+      voice.startWakeWordMode();
       setMicActive(false);
-      setStatus('READY');
+      setStatus('Say "Jarvis" to activate...');
     } else {
-      autoListen = true;
       voice.startListening();
       setMicActive(true);
       setStatus('LISTENING...');
@@ -390,9 +388,17 @@ document.addEventListener('DOMContentLoaded', () => {
     sendMessage(text);
   };
 
+  voice.onWakeWord = () => {
+    setMicActive(true);
+    setStatus('LISTENING...');
+    voice.stopSpeaking();
+  };
+
   voice.onEnd = () => {
-    setMicActive(false);
-    if (!busy) setStatus('READY');
+    if (!busy && !voice._shouldRun) {
+      setMicActive(false);
+      setStatus('READY');
+    }
   };
 
   voice.onSpeakStart = () => hud.setTalking(true);

@@ -118,28 +118,95 @@ class VoiceManager {
   _setupRecognition() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) return;
-    const rec          = new SR();
-    rec.lang           = 'en-US';
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-    rec.continuous     = false;
 
-    rec.onstart  = () => { this.listening = true;  this.onStart(); };
-    rec.onend    = () => { this.listening = false; this.onEnd(); };
-    rec.onerror  = () => { this.listening = false; this.onEnd(); };
-    rec.onresult = (e) => {
-      const t = e.results[0][0].transcript.trim();
-      if (t) this.onResult(t);
+    const rec           = new SR();
+    rec.lang            = 'en-US';
+    rec.interimResults  = true;
+    rec.maxAlternatives = 1;
+    rec.continuous      = true;
+
+    this._mode      = 'wake';   // 'wake' or 'active'
+    this._gathered  = '';
+    this._silTimer  = null;
+    this._shouldRun = false;
+
+    rec.onstart = () => { this.listening = true; this.onStart(); };
+
+    rec.onend = () => {
+      this.listening = false;
+      this.onEnd();
+      // auto-restart so wake word always works
+      if (this._shouldRun) {
+        setTimeout(() => { try { rec.start(); } catch {} }, 300);
+      }
     };
+
+    rec.onerror = (e) => {
+      if (e.error === 'no-speech') return; // ignore silence errors
+      this.listening = false;
+      this.onEnd();
+      if (this._shouldRun) {
+        setTimeout(() => { try { rec.start(); } catch {} }, 500);
+      }
+    };
+
+    rec.onresult = (e) => {
+      let finalChunk = '', interimChunk = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        e.results[i].isFinal ? finalChunk += t : interimChunk += t;
+      }
+
+      const heard = (finalChunk || interimChunk).trim().toLowerCase();
+
+      if (this._mode === 'wake') {
+        if (heard.includes('jarvis')) {
+          this._mode     = 'active';
+          this._gathered = '';
+          this.onWakeWord();
+        }
+
+      } else if (this._mode === 'active') {
+        if (finalChunk) this._gathered += ' ' + finalChunk;
+
+        // reset 2-second silence timer on every new speech chunk
+        clearTimeout(this._silTimer);
+        this._silTimer = setTimeout(() => {
+          const cmd = this._gathered.trim();
+          if (cmd) this.onResult(cmd);
+          this._gathered = '';
+          this._mode     = 'wake';
+        }, 2000);
+      }
+    };
+
     this.recognition = rec;
   }
 
   startListening() {
-    if (!this.recognition || this.listening) return;
-    try { this.synth.cancel(); this.recognition.start(); } catch { /* already started */ }
+    if (!this.recognition) return;
+    this._shouldRun = true;
+    this._mode      = 'active';
+    this._gathered  = '';
+    if (!this.listening) {
+      try { this.synth.cancel(); this.recognition.start(); } catch {}
+    }
+  }
+
+  startWakeWordMode() {
+    if (!this.recognition) return;
+    this._shouldRun = true;
+    this._mode      = 'wake';
+    this._gathered  = '';
+    if (!this.listening) {
+      try { this.recognition.start(); } catch {}
+    }
   }
 
   stopListening() {
+    this._shouldRun = false;
+    this._mode      = 'wake';
+    clearTimeout(this._silTimer);
     if (this.recognition && this.listening) {
       try { this.recognition.stop(); } catch {}
     }
