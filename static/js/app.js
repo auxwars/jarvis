@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const $input   = document.getElementById('text-input');
   const $mic     = document.getElementById('mic-btn');
   const $send    = document.getElementById('send-btn');
+  const $mute    = document.getElementById('mute-btn');
   const $status  = document.getElementById('status-line');
   const $wave    = document.getElementById('waveform-canvas');
   const $boot    = document.getElementById('boot');
@@ -15,64 +16,89 @@ document.addEventListener('DOMContentLoaded', () => {
   const $topTime = document.getElementById('top-time');
   const $topDate = document.getElementById('top-date');
   const $topHost = document.getElementById('top-host');
-  const $topAI   = document.getElementById('top-ai-status');
 
-  // ─── panel refs ──────────────────────────────────────
+  // ── Homework panel ─────────────────────────────────────
+  const $hwPanel   = document.getElementById('hw-panel');
+  const $hwList    = document.getElementById('hw-list');
+  const $hwToggle  = document.getElementById('hw-toggle');
+  const $hwMinimize= document.getElementById('hw-minimize');
+  let hwMinimized  = false;
+
+  $hwToggle.addEventListener('click', () => {
+    hwMinimized = !hwMinimized;
+    $hwList.style.display      = hwMinimized ? 'none' : 'block';
+    $hwMinimize.textContent    = hwMinimized ? '▲' : '▼';
+  });
+
+  async function refreshHomework() {
+    try {
+      const hw = await fetch('/api/homework').then(r => r.json());
+      if (!hw.length) {
+        $hwList.innerHTML = '<div class="hw-empty">No assignments. Suspicious.</div>';
+        return;
+      }
+      $hwList.innerHTML = hw.map((item, i) => `
+        <div class="hw-item" data-index="${i}">
+          <div class="hw-subject">${item.subject}</div>
+          <div class="hw-task">${item.task}</div>
+          ${item.due ? `<div class="hw-due">Due: ${item.due}</div>` : ''}
+        </div>
+      `).join('');
+    } catch { /* server may not be ready */ }
+  }
+
+  // ── Panel refs ─────────────────────────────────────────
   const panels = {
-    cpuVal:   document.getElementById('cpu-val'),
-    cpuBar:   document.getElementById('cpu-bar'),
-    cpuSub:   document.getElementById('cpu-sub'),
-    cpuDonut: document.getElementById('cpu-donut'),
-
-    memVal:   document.getElementById('mem-val'),
-    memBar:   document.getElementById('mem-bar'),
-    memSub:   document.getElementById('mem-sub'),
-    memDonut: document.getElementById('mem-donut'),
-
-    diskVal:  document.getElementById('disk-val'),
-    diskBar:  document.getElementById('disk-bar'),
-    diskSub:  document.getElementById('disk-sub'),
-    diskDonut:document.getElementById('disk-donut'),
-
-    netVal:   document.getElementById('net-val'),
-    netBar:   document.getElementById('net-bar'),
-    netSub:   document.getElementById('net-sub'),
-    netDonut: document.getElementById('net-donut'),
-
-    aiModel:  document.getElementById('ai-model'),
-    aiPct:    document.getElementById('ai-pct'),
-    uptime:   document.getElementById('uptime-val'),
-    uptimePct:document.getElementById('uptime-pct'),
-    msgCount: document.getElementById('msg-count'),
-    msgPct:   document.getElementById('msg-pct'),
-    respTime: document.getElementById('resp-time'),
-    respPct:  document.getElementById('resp-pct'),
+    cpuVal:    document.getElementById('cpu-val'),
+    cpuBar:    document.getElementById('cpu-bar'),
+    cpuSub:    document.getElementById('cpu-sub'),
+    cpuDonut:  document.getElementById('cpu-donut'),
+    memVal:    document.getElementById('mem-val'),
+    memBar:    document.getElementById('mem-bar'),
+    memSub:    document.getElementById('mem-sub'),
+    memDonut:  document.getElementById('mem-donut'),
+    diskVal:   document.getElementById('disk-val'),
+    diskBar:   document.getElementById('disk-bar'),
+    diskSub:   document.getElementById('disk-sub'),
+    diskDonut: document.getElementById('disk-donut'),
+    netVal:    document.getElementById('net-val'),
+    netBar:    document.getElementById('net-bar'),
+    netSub:    document.getElementById('net-sub'),
+    netDonut:  document.getElementById('net-donut'),
+    aiModel:   document.getElementById('ai-model'),
+    aiPct:     document.getElementById('ai-pct'),
+    uptime:    document.getElementById('uptime-val'),
+    uptimePct: document.getElementById('uptime-pct'),
+    msgCount:  document.getElementById('msg-count'),
+    msgPct:    document.getElementById('msg-pct'),
+    respTime:  document.getElementById('resp-time'),
+    respPct:   document.getElementById('resp-pct'),
   };
 
   const sparkHistory = { cpu: Array(16).fill(0), mem: Array(16).fill(0) };
-  let startTime = Date.now();
-  let msgCount  = 0;
-  let busy      = false;
+  const startTime = Date.now();
+  let busy    = false;
+  let autoListen = true;   // mic on by default
 
-  // ─── Boot sequence ───────────────────────────────────
+  // ── Boot sequence ──────────────────────────────────────
   const bootLines = [
-    'Initializing intelligence core…',
-    'Loading language models…',
-    'Connecting to Stark Cloud…',
-    'Calibrating neural interface…',
-    'Running diagnostics… all systems nominal.',
+    'Initializing intelligence core...',
+    'Loading language models...',
+    'Connecting to Stark Cloud...',
+    'Calibrating neural interface...',
+    'Running diagnostics... all systems nominal.',
     'Good day, sir. J.A.R.V.I.S. is online.',
   ];
 
   async function boot() {
     let pct = 0;
     for (let i = 0; i < bootLines.length; i++) {
-      await sleep(350 + Math.random() * 250);
+      await sleep(300 + Math.random() * 200);
       $bootLog.innerHTML += `<span>${bootLines[i]}</span><br>`;
       pct = Math.round(((i + 1) / bootLines.length) * 100);
       $bootBar.style.width = pct + '%';
     }
-    await sleep(500);
+    await sleep(400);
     $boot.classList.add('fade');
     await sleep(650);
     $boot.style.display = 'none';
@@ -83,110 +109,107 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateClock, 1000);
     fetchSystem();
     setInterval(fetchSystem, 2500);
+    refreshHomework();
+    setInterval(refreshHomework, 5000);
 
     await sleep(200);
     greet();
   }
 
   function greet() {
-    const hour = new Date().getHours();
-    const greeting =
-      hour < 12 ? 'Good morning' :
-      hour < 17 ? 'Good afternoon' : 'Good evening';
-    const msg = `${greeting}, sir. All systems are fully operational. How may I assist you today?`;
+    const h = new Date().getHours();
+    const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+    const msg = `${g}, sir. All systems are fully operational and I am, as always, at your disposal. Try not to waste it.`;
     appendMsg('jarvis', msg);
     voice.speak(msg);
     setStatus('READY');
+
+    // Auto-start mic after greeting finishes
+    voice.onSpeakEnd = () => {
+      hud.setTalking(false);
+      if (autoListen && !busy) {
+        setTimeout(() => {
+          voice.startListening();
+          setMicActive(true);
+          setStatus('LISTENING...');
+        }, 400);
+      }
+    };
   }
 
-  // ─── Clock ───────────────────────────────────────────
+  // ── Clock ──────────────────────────────────────────────
   function updateClock() {
     const now = new Date();
-    $topTime.textContent = now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-    $topDate.textContent = now.toLocaleDateString('en-GB', { weekday:'short', year:'numeric', month:'short', day:'numeric' });
+    $topTime.textContent = now.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    $topDate.textContent = now.toLocaleDateString('en-GB', {weekday:'short', year:'numeric', month:'short', day:'numeric'});
     const up = Math.floor((Date.now() - startTime) / 1000);
-    const h  = String(Math.floor(up/3600)).padStart(2,'0');
-    const m  = String(Math.floor((up%3600)/60)).padStart(2,'0');
-    const s  = String(up%60).padStart(2,'0');
-    if (panels.uptime) panels.uptime.textContent = `${h}:${m}:${s}`;
+    const hh = String(Math.floor(up / 3600)).padStart(2,'0');
+    const mm = String(Math.floor((up % 3600) / 60)).padStart(2,'0');
+    const ss = String(up % 60).padStart(2,'0');
+    if (panels.uptime)    panels.uptime.textContent    = `${hh}:${mm}:${ss}`;
     if (panels.uptimePct) panels.uptimePct.textContent = '100%';
   }
 
-  // ─── System metrics ──────────────────────────────────
+  // ── System metrics ─────────────────────────────────────
   async function fetchSystem() {
     try {
-      const data = await fetch('/api/system').then(r => r.json());
-      hud.setMetrics(data);
-      updatePanels(data);
-    } catch { /* server may be warming up */ }
+      const d = await fetch('/api/system').then(r => r.json());
+      hud.setMetrics(d);
+      updatePanels(d);
+    } catch {}
   }
 
   function updatePanels(d) {
-    const cpu  = d.cpu  || 0;
+    const cpu  = d.cpu    || 0;
     const mem  = d.memory || 0;
-    const disk = d.disk || 0;
+    const disk = d.disk   || 0;
 
-    sparkHistory.cpu.push(cpu);  sparkHistory.cpu.shift();
-    sparkHistory.mem.push(mem);  sparkHistory.mem.shift();
+    sparkHistory.cpu.push(cpu); sparkHistory.cpu.shift();
+    sparkHistory.mem.push(mem); sparkHistory.mem.shift();
 
-    // CPU
-    panels.cpuVal.textContent = cpu + '%';
-    set(panels.cpuBar, cpu);
-    panels.cpuSub.textContent = `${d.cpu_cores || '—'} cores · ${d.cpu_freq_mhz || '—'} MHz`;
-    drawDonut(panels.cpuDonut, cpu, cpu > 80 ? '#ff6633' : '#00d4ff');
-    panels.cpuBar.className = 'bar-fill' + (cpu > 80 ? ' hot' : cpu > 60 ? ' warn' : '');
+    set(panels.cpuVal,  cpu + '%');
+    set(panels.cpuSub,  `${d.cpu_cores || '—'} cores · ${d.cpu_freq_mhz || '—'} MHz`);
+    setBar(panels.cpuBar, cpu, cpu > 80 ? 'hot' : cpu > 60 ? 'warn' : '');
+    if (panels.cpuDonut) drawDonut(panels.cpuDonut, cpu, cpu > 80 ? '#ff6633' : '#00d4ff');
 
-    // Memory
-    panels.memVal.textContent = mem + '%';
-    set(panels.memBar, mem);
-    panels.memSub.textContent = `${d.memory_used_gb || '—'} / ${d.memory_total_gb || '—'} GB`;
-    drawDonut(panels.memDonut, mem, mem > 80 ? '#ff6633' : '#0077ee');
+    set(panels.memVal,  mem + '%');
+    set(panels.memSub,  `${d.memory_used_gb || '—'} / ${d.memory_total_gb || '—'} GB`);
+    setBar(panels.memBar, mem);
+    if (panels.memDonut) drawDonut(panels.memDonut, mem, '#0077ee');
 
-    // Disk
-    panels.diskVal.textContent = disk + '%';
-    set(panels.diskBar, disk);
-    panels.diskSub.textContent = `${d.disk_used_gb || '—'} / ${d.disk_total_gb || '—'} GB`;
-    drawDonut(panels.diskDonut, disk, disk > 85 ? '#ff6633' : '#0055cc');
+    set(panels.diskVal, disk + '%');
+    set(panels.diskSub, `${d.disk_used_gb || '—'} / ${d.disk_total_gb || '—'} GB`);
+    setBar(panels.diskBar, disk);
+    if (panels.diskDonut) drawDonut(panels.diskDonut, disk, '#0055cc');
 
-    // Network
     const net = d.net_recv_mb || 0;
-    panels.netVal.textContent = net + ' MB';
-    const netPct = Math.min(100, net / 10);
-    set(panels.netBar, netPct);
-    panels.netSub.textContent = `↑ ${d.net_sent_mb || 0} MB sent`;
-    drawDonut(panels.netDonut, netPct, '#00ffcc');
+    set(panels.netVal, net + ' MB');
+    set(panels.netSub, `↑ ${d.net_sent_mb || 0} MB sent`);
+    setBar(panels.netBar, Math.min(100, net / 10));
+    if (panels.netDonut) drawDonut(panels.netDonut, Math.min(100, net / 10), '#00ffcc');
 
-    // Right: AI
-    if (panels.aiModel) panels.aiModel.textContent = d.model || '—';
-    if (panels.aiPct)   panels.aiPct.textContent   = '100%';
+    if (panels.aiModel)  panels.aiModel.textContent  = d.model || '—';
+    if (panels.aiPct)    panels.aiPct.textContent    = 'ON';
+    if (panels.msgCount) panels.msgCount.textContent = d.messages || 0;
+    if (panels.msgPct)   panels.msgPct.textContent   = (d.messages || 0) + ' req';
+    if (panels.respTime) panels.respTime.textContent = d.avg_ms || 0;
+    if (panels.respPct)  panels.respPct.textContent  = (d.avg_ms || 0) + 'ms';
+    if ($topHost)        $topHost.textContent        = d.hostname || 'STARK-SRV';
 
-    // Right: Messages
-    const msgs = d.messages || msgCount;
-    if (panels.msgCount) panels.msgCount.textContent = msgs;
-    if (panels.msgPct)   panels.msgPct.textContent   = msgs + ' req';
-
-    // Right: Response time
-    const rt = d.avg_ms || 0;
-    if (panels.respTime) panels.respTime.textContent = rt;
-    if (panels.respPct)  panels.respPct.textContent  = rt + 'ms';
-
-    if ($topHost) $topHost.textContent = d.hostname || 'STARK-SRV';
-
-    // spark bars
-    updateSpark('cpu-spark',  sparkHistory.cpu);
-    updateSpark('mem-spark',  sparkHistory.mem);
-
-    // mini bars
-    updateMini('ai-bars',   [100,100,100,100,100,100,100,100]);
-    updateMini('msg-bars',  buildMini(msgs));
-    updateMini('resp-bars', buildMini(rt, 2000));
-    updateMini('up-bars',   [100,100,100,100,100,100,100,100]);
+    updateSpark('cpu-spark', sparkHistory.cpu);
+    updateSpark('mem-spark', sparkHistory.mem);
+    updateMini('ai-bars',   Array(8).fill(100));
+    updateMini('up-bars',   Array(8).fill(100));
+    updateMini('msg-bars',  buildMini(d.messages || 0, 50));
+    updateMini('resp-bars', buildMini(d.avg_ms || 0, 2000));
   }
 
-  function set(el, pct) {
-    if (el) el.style.width = Math.min(100, pct) + '%';
+  function set(el, val) { if (el) el.textContent = val; }
+  function setBar(el, pct, cls) {
+    if (!el) return;
+    el.style.width = Math.min(100, pct) + '%';
+    el.className   = 'bar-fill' + (cls ? ' ' + cls : '');
   }
-
   function updateSpark(id, arr) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -195,7 +218,6 @@ document.addEventListener('DOMContentLoaded', () => {
       b.style.height = Math.round((arr[i] / max) * 18) + 'px';
     });
   }
-
   function updateMini(id, arr) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -204,23 +226,22 @@ document.addEventListener('DOMContentLoaded', () => {
       b.style.height = Math.round(((arr[i] || 0) / max) * 18) + 'px';
     });
   }
-
-  function buildMini(val, scale = 100) {
+  function buildMini(val, scale) {
     const pct = Math.min(100, (val / scale) * 100);
-    return Array.from({length:8}, (_,i) => i < Math.round(pct/12.5) ? pct : pct*0.3);
+    return Array.from({length:8}, (_,i) => i < Math.round(pct / 12.5) ? pct : pct * 0.3);
   }
 
-  // ─── Chat ────────────────────────────────────────────
+  // ── Chat ───────────────────────────────────────────────
   function appendMsg(role, text) {
-    const div = document.createElement('div');
+    const div     = document.createElement('div');
     div.className = `msg ${role}`;
     if (role === 'jarvis') {
       const sp = document.createElement('span');
-      sp.className = 'speaker';
+      sp.className   = 'speaker';
       sp.textContent = 'J.A.R.V.I.S.';
       div.appendChild(sp);
     }
-    const content = document.createElement('span');
+    const content     = document.createElement('span');
     content.textContent = text;
     div.appendChild(content);
     $chat.appendChild(div);
@@ -228,7 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return div;
   }
 
-  function typeMsg(text) {
+  function typeMsg() {
     const div = document.createElement('div');
     div.className = 'msg jarvis';
     const sp = document.createElement('span');
@@ -248,88 +269,83 @@ document.addEventListener('DOMContentLoaded', () => {
     $chat.scrollTop = $chat.scrollHeight;
   }
 
-  function setStatus(text) {
-    if ($status) $status.textContent = text;
+  function setStatus(text) { if ($status) $status.textContent = text; }
+  function setMicActive(on) {
+    $mic.classList.toggle('active', on);
+    $mic.textContent = on ? '⏹ STOP' : '⏺ MIC';
   }
 
-  // ─── Send / Receive ──────────────────────────────────
+  // ── Send / Receive ─────────────────────────────────────
   async function sendMessage(text) {
-    if (busy || !text) return;
+    if (busy || !text.trim()) return;
     busy = true;
-    msgCount++;
     voice.stopSpeaking();
+    voice.stopListening();
+    setMicActive(false);
 
     appendMsg('user', text);
-    setStatus('PROCESSING…');
+    setStatus('PROCESSING...');
     hud.setTalking(false);
 
-    // thinking placeholder
+    // Thinking placeholder
     const thinkDiv = document.createElement('div');
     thinkDiv.className = 'msg jarvis';
-    const sp = document.createElement('span');
-    sp.className = 'speaker'; sp.textContent = 'J.A.R.V.I.S.';
-    const dot = document.createElement('span');
-    dot.className = 'dots';
+    const sp  = document.createElement('span'); sp.className  = 'speaker'; sp.textContent = 'J.A.R.V.I.S.';
+    const dot = document.createElement('span'); dot.className = 'dots';
     thinkDiv.appendChild(sp); thinkDiv.appendChild(dot);
-    $chat.appendChild(thinkDiv);
-    $chat.scrollTop = $chat.scrollHeight;
+    $chat.appendChild(thinkDiv); $chat.scrollTop = $chat.scrollHeight;
 
     let fullText = '';
     let resultEl = null;
 
     try {
-      const resp = await fetch('/api/chat', {
+      const resp   = await fetch('/api/chat', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ message: text }),
       });
-
       const reader = resp.body.getReader();
       const dec    = new TextDecoder();
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
-
-        const lines = dec.decode(value).split('\n');
-        for (const line of lines) {
+        for (const line of dec.decode(value).split('\n')) {
           if (!line.startsWith('data:')) continue;
           let payload;
           try { payload = JSON.parse(line.slice(5)); } catch { continue; }
-
           if (payload.error) {
             thinkDiv.remove();
-            appendMsg('jarvis', `I'm afraid I encountered an error, sir: ${payload.error}`);
+            appendMsg('jarvis', `I appear to have encountered an error, sir: ${payload.error}`);
             break;
           }
-
           if (!payload.done && payload.text) {
-            if (!resultEl) {
-              thinkDiv.remove();
-              resultEl = typeMsg(fullText);
-            }
+            if (!resultEl) { thinkDiv.remove(); resultEl = typeMsg(); }
             fullText += payload.text;
             resultEl.textContent = fullText;
             $chat.scrollTop = $chat.scrollHeight;
           }
-
           if (payload.done) {
             setStatus(`READY  ·  ${payload.elapsed || '—'}s`);
             hud.setTalking(true);
             voice.speak(fullText);
+            refreshHomework();
           }
         }
       }
-    } catch (err) {
+    } catch {
       thinkDiv.remove();
-      appendMsg('jarvis', 'I appear to be experiencing a connectivity issue, sir. Please check the server.');
+      appendMsg('jarvis', 'Server connection issue, sir. Is the Python process still running?');
       setStatus('ERROR');
     }
 
     busy = false;
+
+    // Resume auto-listen after Jarvis finishes speaking
+    // (handled in voice.onSpeakEnd set in greet())
   }
 
-  // ─── Input handlers ──────────────────────────────────
+  // ── Input handlers ─────────────────────────────────────
   $send.addEventListener('click', () => {
     const t = $input.value.trim();
     if (t) { $input.value = ''; sendMessage(t); }
@@ -345,32 +361,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
   $mic.addEventListener('click', () => {
     if (!voice.recognition) {
-      sysMsg('Speech recognition not supported in this browser');
+      sysMsg('Speech recognition not supported — try Chrome or Edge');
       return;
     }
     if (voice.listening) {
+      autoListen = false;   // manual stop = turn off auto-listen
       voice.stopListening();
-      $mic.classList.remove('active');
+      setMicActive(false);
       setStatus('READY');
     } else {
+      autoListen = true;
       voice.startListening();
-      $mic.classList.add('active');
-      setStatus('LISTENING…');
+      setMicActive(true);
+      setStatus('LISTENING...');
     }
   });
 
+  if ($mute) {
+    $mute.addEventListener('click', () => {
+      const muted = voice.toggleMute();
+      $mute.textContent = muted ? '🔇 MUTED' : '🔊 SOUND';
+      $mute.classList.toggle('warn', muted);
+    });
+  }
+
   voice.onResult = (text) => {
-    $mic.classList.remove('active');
+    setMicActive(false);
     sendMessage(text);
   };
+
   voice.onEnd = () => {
-    $mic.classList.remove('active');
+    setMicActive(false);
     if (!busy) setStatus('READY');
   };
-  voice.onSpeakStart = () => hud.setTalking(true);
-  voice.onSpeakEnd   = () => hud.setTalking(false);
 
-  // spacebar = mic toggle
+  voice.onSpeakStart = () => hud.setTalking(true);
+  // onSpeakEnd is set inside greet() to restart mic
+
+  // Spacebar = toggle mic (only when not typing)
   document.addEventListener('keydown', (e) => {
     if (e.code === 'Space' && document.activeElement !== $input) {
       e.preventDefault();
@@ -378,9 +406,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ─── Util ─────────────────────────────────────────────
+  // ── Util ───────────────────────────────────────────────
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-  // ─── Go ──────────────────────────────────────────────
+  // ── Go ─────────────────────────────────────────────────
   boot();
 });

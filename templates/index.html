@@ -8,7 +8,7 @@
 </head>
 <body>
 
-<!-- ── BOOT OVERLAY ─────────────────────────────────────── -->
+<!-- ── BOOT OVERLAY ──────────────────────────────────────── -->
 <div id="boot">
   <div class="boot-title">J.A.R.V.I.S.</div>
   <div class="boot-sub">JUST A RATHER VERY INTELLIGENT SYSTEM</div>
@@ -16,7 +16,19 @@
   <div id="boot-log"></div>
 </div>
 
-<!-- ── MAIN APP ──────────────────────────────────────────── -->
+<!-- ── HOMEWORK CORNER PANEL ──────────────────────────────── -->
+<div id="hw-panel">
+  <div id="hw-header">
+    <span id="hw-title">HOMEWORK</span>
+    <button id="hw-toggle" id="hw-minimize">▼</button>
+  </div>
+  <div id="hw-list">
+    <div class="hw-empty">No assignments. Suspicious.</div>
+  </div>
+  <div id="hw-hint">Say "Add homework: [subject] [task] due [date]"</div>
+</div>
+
+<!-- ── MAIN APP ───────────────────────────────────────────── -->
 <div id="app">
 
   <!-- TOP BAR -->
@@ -30,19 +42,19 @@
         <div class="status-dot"></div>
         <span>STARK IND.</span>
       </div>
-      <div class="status-pill" id="top-host" style="letter-spacing:1px;font-size:10px;">STARK-SRV</div>
+      <div class="status-pill" id="top-host">STARK-SRV</div>
     </div>
 
     <div class="top-brand">J.A.R.V.I.S.</div>
 
     <div class="top-right">
-      <div class="status-pill" id="top-ai-status">
+      <div class="status-pill">
         <div class="status-dot"></div>
         <span>CLAUDE · ONLINE</span>
       </div>
       <div class="status-pill">
         <div class="status-dot"></div>
-        <span>SYS NOMINAL</span>
+        <span>NEWTON MA · 02459</span>
       </div>
     </div>
   </header>
@@ -50,63 +62,50 @@
   <!-- LEFT PANEL -->
   <aside id="left-panel">
 
-    <!-- CPU -->
     <div class="card">
       <div class="card-title">TITLE 01 · PROCESSOR</div>
       <div class="card-main">
-        <div class="donut-wrap">
-          <canvas id="cpu-donut" width="42" height="42"></canvas>
-        </div>
+        <div class="donut-wrap"><canvas id="cpu-donut" width="42" height="42"></canvas></div>
         <div class="card-data">
           <div class="card-value" id="cpu-val">0%</div>
           <div class="card-sub"  id="cpu-sub">— cores</div>
           <div class="bar-track"><div class="bar-fill" id="cpu-bar" style="width:0%"></div></div>
           <div class="spark" id="cpu-spark">
-            <div class="spark-b"></div><div class="spark-b"></div>
-            <div class="spark-b"></div><div class="spark-b"></div>
-            <div class="spark-b"></div><div class="spark-b"></div>
-            <div class="spark-b"></div><div class="spark-b"></div>
-            <div class="spark-b"></div><div class="spark-b"></div>
-            <div class="spark-b"></div><div class="spark-b"></div>
-            <div class="spark-b"></div><div class="spark-b"></div>
-            <div class="spark-b"></div><div class="spark-b"></div>
+            <div class="spark-b"></div><div class="spark-b"></div><div class="spark-b"></div>
+            <div class="spark-b"></div><div class="spark-b"></div><div class="spark-b"></div>
+            <div class="spark-b"></div><div class="spark-b"></div><div class="spark-b"></div>
+            <div class="spark-b"></div><div class="spark-b"></div><div class="spark-b"></div>
+            <div class="spark-b"></div><div class="spark-b"></div><div class="spark-b"></div>
+            <div class="spark-b"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Memory -->
     <div class="card">
       <div class="card-title">TITLE 02 · MEMORY</div>
       <div class="card-main">
-        <div class="donut-wrap">
-          <canvas id="mem-donut" width="42" height="42"></canvas>
-        </div>
+        <div class="donut-wrap"><canvas id="mem-donut" width="42" height="42"></canvas></div>
         <div class="card-data">
           <div class="card-value" id="mem-val">0%</div>
           <div class="card-sub"  id="mem-sub">— / — GB</div>
           <div class="bar-track"><div class="bar-fill" id="mem-bar" style="width:0%"></div></div>
           <div class="spark" id="mem-spark">
-            <div class="spark-b"></div><div class="spark-b"></div>
-            <div class="spark-b"></div><div class="spark-b"></div>
-            <div class="spark-b"></div><div class="spark-b"></div>
-            <div class="spark-b"></div><div class="spark-b"></div>
-            <div class="spark-b"></div><div class="spark-b"></div>
-            <div class="spark-b"></div><div class="spark-b"></div>
-            <div class="spark-b"></div><div class="spark-b"></div>
-            <div class="spark-b"></div><div class="spark-b"></div>
+            <div class="spark-b"></div><div class="spark-b"></div><div class="spark-b"></div>
+            <div class="spark-b"></div><div class="spark-b"></div><div class="spark-b"></div>
+            <div class="spark-b"></div><div class="spark-b"></div><div class="spark-b"></div>
+            <div class="spark-b"></div><div class="spark-b"></div><div class="spark-b"></div>
+            <div class="spark-b"></div><div class="spark-b"></div><div class="spark-b"></div>
+            <div class="spark-b"></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Disk -->
     <div class="card">
       <div class="card-title">TITLE 03 · STORAGE</div>
       <div class="card-main">
-        <div class="donut-wrap">
-          <canvas id="disk-donut" width="42" height="42"></canvas>
-        </div>
+        <div class="donut-wrap"><canvas id="disk-donut" width="42" height="42"></canvas></div>
         <div class="card-data">
           <div class="card-value" id="disk-val">0%</div>
           <div class="card-sub"  id="disk-sub">— / — GB</div>
@@ -115,13 +114,10 @@
       </div>
     </div>
 
-    <!-- Network -->
     <div class="card">
       <div class="card-title">TITLE 04 · NETWORK</div>
       <div class="card-main">
-        <div class="donut-wrap">
-          <canvas id="net-donut" width="42" height="42"></canvas>
-        </div>
+        <div class="donut-wrap"><canvas id="net-donut" width="42" height="42"></canvas></div>
         <div class="card-data">
           <div class="card-value" id="net-val">0 MB</div>
           <div class="card-sub"  id="net-sub">— MB sent</div>
@@ -135,68 +131,58 @@
   <!-- CENTER -->
   <main id="center">
     <canvas id="hud-canvas"></canvas>
-
-    <!-- Chat overlay -->
     <div id="chat-area"></div>
   </main>
 
   <!-- RIGHT PANEL -->
   <aside id="right-panel">
 
-    <!-- AI Model -->
     <div class="metric-card">
       <div class="metric-info">
         <div class="metric-title">TITLE 01 · AI ENGINE</div>
         <div class="metric-label" id="ai-model">claude-sonnet-4-6</div>
         <div class="mini-bars" id="ai-bars">
-          <div class="mini-bar"></div><div class="mini-bar"></div>
-          <div class="mini-bar"></div><div class="mini-bar"></div>
-          <div class="mini-bar"></div><div class="mini-bar"></div>
+          <div class="mini-bar"></div><div class="mini-bar"></div><div class="mini-bar"></div>
+          <div class="mini-bar"></div><div class="mini-bar"></div><div class="mini-bar"></div>
           <div class="mini-bar"></div><div class="mini-bar"></div>
         </div>
       </div>
       <div class="metric-pct" id="ai-pct">ON</div>
     </div>
 
-    <!-- Uptime -->
     <div class="metric-card">
       <div class="metric-info">
         <div class="metric-title">TITLE 02 · UPTIME</div>
         <div class="metric-label" id="uptime-val">00:00:00</div>
         <div class="mini-bars" id="up-bars">
-          <div class="mini-bar"></div><div class="mini-bar"></div>
-          <div class="mini-bar"></div><div class="mini-bar"></div>
-          <div class="mini-bar"></div><div class="mini-bar"></div>
+          <div class="mini-bar"></div><div class="mini-bar"></div><div class="mini-bar"></div>
+          <div class="mini-bar"></div><div class="mini-bar"></div><div class="mini-bar"></div>
           <div class="mini-bar"></div><div class="mini-bar"></div>
         </div>
       </div>
       <div class="metric-pct" id="uptime-pct">100%</div>
     </div>
 
-    <!-- Message count -->
     <div class="metric-card">
       <div class="metric-info">
         <div class="metric-title">TITLE 03 · QUERIES</div>
         <div class="metric-label" id="msg-count">0</div>
         <div class="mini-bars" id="msg-bars">
-          <div class="mini-bar"></div><div class="mini-bar"></div>
-          <div class="mini-bar"></div><div class="mini-bar"></div>
-          <div class="mini-bar"></div><div class="mini-bar"></div>
+          <div class="mini-bar"></div><div class="mini-bar"></div><div class="mini-bar"></div>
+          <div class="mini-bar"></div><div class="mini-bar"></div><div class="mini-bar"></div>
           <div class="mini-bar"></div><div class="mini-bar"></div>
         </div>
       </div>
       <div class="metric-pct" id="msg-pct">0 req</div>
     </div>
 
-    <!-- Response time -->
     <div class="metric-card">
       <div class="metric-info">
         <div class="metric-title">TITLE 04 · AVG LATENCY</div>
         <div class="metric-label" id="resp-time">0</div>
         <div class="mini-bars" id="resp-bars">
-          <div class="mini-bar"></div><div class="mini-bar"></div>
-          <div class="mini-bar"></div><div class="mini-bar"></div>
-          <div class="mini-bar"></div><div class="mini-bar"></div>
+          <div class="mini-bar"></div><div class="mini-bar"></div><div class="mini-bar"></div>
+          <div class="mini-bar"></div><div class="mini-bar"></div><div class="mini-bar"></div>
           <div class="mini-bar"></div><div class="mini-bar"></div>
         </div>
       </div>
@@ -209,11 +195,12 @@
   <footer id="bottom-bar" style="position:relative;">
     <canvas id="waveform-canvas"></canvas>
     <div id="input-row">
-      <button class="btn" id="mic-btn">&#9679; MIC</button>
-      <input type="text" id="text-input" placeholder="Speak or type a command, sir…" autocomplete="off" spellcheck="false">
-      <button class="btn" id="send-btn">SEND &#8250;</button>
+      <button class="btn active" id="mic-btn">⏺ MIC</button>
+      <input type="text" id="text-input" placeholder="Speak or type a command, sir..." autocomplete="off" spellcheck="false">
+      <button class="btn" id="send-btn">SEND ›</button>
+      <button class="btn" id="mute-btn">🔊 SOUND</button>
     </div>
-    <div id="status-line">INITIALIZING…</div>
+    <div id="status-line">INITIALIZING...</div>
   </footer>
 
 </div><!-- #app -->
