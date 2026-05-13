@@ -399,11 +399,11 @@ document.addEventListener('DOMContentLoaded', () => {
   voice.onSpeakStart = () => hud.setTalking(true);
   // onSpeakEnd is set inside greet() to restart mic
 
-  // Spacebar = toggle mic (only when not typing)
+  // Spacebar = toggle mute (only when not typing)
   document.addEventListener('keydown', (e) => {
     if (e.code === 'Space' && document.activeElement !== $input) {
       e.preventDefault();
-      $mic.click();
+      $mute.click();
     }
   });
 
