@@ -75,8 +75,8 @@ class VoiceManager {
     this.synth.cancel();
     const utter    = new SpeechSynthesisUtterance(text);
     if (this.chosenVoice) utter.voice = this.chosenVoice;
-    utter.rate     = 1.35;   // noticeably faster
-    utter.pitch    = 0.88;   // lower, more authoritative
+    utter.rate     = 1.08;   // natural conversational pace
+    utter.pitch    = 0.92;   // slightly lower, more human
     utter.volume   = 1.0;
     utter.lang     = 'en-GB';
     utter.onstart  = () => this.onSpeakStart();

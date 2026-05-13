@@ -1,4 +1,4 @@
-import os, json, re, platform, psutil
+import os, json, re, platform, psutil, webbrowser, subprocess
 import requests as http_requests
 from datetime import datetime
 from pathlib import Path
@@ -100,6 +100,29 @@ TOOLS = [
         "input_schema": {"type": "object", "properties": {}, "required": []},
     },
     {
+        "name": "open_app_or_website",
+        "description": (
+            "Open a website in the browser or launch a Windows app. "
+            "Use for requests like 'open YouTube', 'open Spotify', 'open Chrome', "
+            "'open calculator', 'open Discord', 'search Google for X', etc."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": ["website", "app"],
+                    "description": "Whether to open a website or a local app"
+                },
+                "target": {
+                    "type": "string",
+                    "description": "URL for websites, or app name for apps (e.g. 'spotify', 'calculator', 'notepad')"
+                },
+            },
+            "required": ["type", "target"],
+        },
+    },
+    {
         "name": "remove_homework",
         "description": "Mark a homework item done and remove it by its number (0-based index).",
         "input_schema": {
@@ -163,6 +186,38 @@ def execute_tool(name, inputs):
         elif name == "get_memory":
             mem = load_json(MEMORY_FILE, {})
             return json.dumps(mem) if mem else "Nothing saved yet."
+
+        elif name == "open_app_or_website":
+            kind   = inputs["type"]
+            target = inputs["target"]
+
+            if kind == "website":
+                url = target if target.startswith("http") else "https://" + target
+                webbrowser.open(url)
+                return f"Opened {url} in your browser."
+
+            elif kind == "app":
+                app_map = {
+                    "spotify":     "spotify",
+                    "discord":     "discord",
+                    "chrome":      "chrome",
+                    "calculator":  "calc",
+                    "notepad":     "notepad",
+                    "explorer":    "explorer",
+                    "file explorer":"explorer",
+                    "steam":       "steam",
+                    "vscode":      "code",
+                    "vs code":     "code",
+                    "minecraft":   "minecraft",
+                    "paint":       "mspaint",
+                    "word":        "winword",
+                    "excel":       "excel",
+                    "powerpoint":  "powerpnt",
+                    "task manager":"taskmgr",
+                }
+                cmd = app_map.get(target.lower(), target)
+                subprocess.Popen(f'start {cmd}', shell=True)
+                return f"Launching {target}."
 
         elif name == "add_homework":
             hw = load_json(HOMEWORK_FILE, [])
@@ -229,6 +284,9 @@ def build_system_prompt():
         "Newton Public Schools uses a rotating Day 1 through Day 6 schedule.\n"
         "- When the user tells you something personal, USE save_memory.\n"
         "- When asked about homework, USE get_homework or add_homework.\n"
+        "- When the user asks to open an app or website, USE open_app_or_website immediately. "
+        "For 'search X on Google' open https://google.com/search?q=X. "
+        "For 'open YouTube' open https://youtube.com. Never say you cannot open things.\n"
         "- NEVER say you cannot access the internet or look things up. You have tools. Use them.\n\n"
         "User context:\n"
         "- Brown Middle School, Newton MA, zip 02459\n"
