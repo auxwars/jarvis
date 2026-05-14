@@ -8,16 +8,25 @@ echo   J.A.R.V.I.S. STARTUP
 echo  ============================================
 echo.
 
-:: !! PASTE YOUR API KEY BELOW (between the quotes, after the =) !!
-set "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"
-
-:: Navigate to jarvis folder
 cd /d "%~dp0"
 
-:: Write key to .env file
-(echo ANTHROPIC_API_KEY=%ANTHROPIC_API_KEY%) > .env
+:: If .env already has a valid key, skip the prompt
+if exist .env (
+    findstr /C:"ANTHROPIC_API_KEY=sk-" .env >nul 2>&1
+    if not errorlevel 1 goto START
+)
 
-:: Start Chrome then the server
+:: Ask for key once, save it forever
+echo  First time setup — paste your Anthropic API key below and press Enter:
+echo  (Get one free at console.anthropic.com)
+echo.
+set /p "APIKEY=  Key: "
+(echo ANTHROPIC_API_KEY=%APIKEY%) > .env
+echo.
+echo  Key saved. You will never be asked again.
+echo.
+
+:START
 echo  Starting J.A.R.V.I.S...
 start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" "http://localhost:5000"
 timeout /t 2 /nobreak >nul
