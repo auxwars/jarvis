@@ -5,9 +5,13 @@ from pathlib import Path
 from flask import Flask, render_template, request, jsonify, Response
 from flask_cors import CORS
 import anthropic
-from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env if it exists and is readable — never crash if it's corrupt
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
