@@ -9,7 +9,7 @@ echo  ============================================
 echo.
 
 :: SET YOUR API KEY HERE (replace PASTE_YOUR_KEY_HERE with your actual key)
-set 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
+set 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
 
 :: Navigate to jarvis folder
 cd /d "%~dp0"
