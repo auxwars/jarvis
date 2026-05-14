@@ -8,16 +8,16 @@ echo   J.A.R.V.I.S. STARTUP
 echo  ============================================
 echo.
 
-:: SET YOUR API KEY HERE (replace PASTE_YOUR_KEY_HERE with your actual key)
-set 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
+:: !! PASTE YOUR API KEY BELOW (between the quotes, after the =) !!
+set "ANTHROPIC_API_KEY=PASTE_YOUR_KEY_HERE"
 
 :: Navigate to jarvis folder
 cd /d "%~dp0"
 
-:: Write a clean .env file every time
-echo ANTHROPIC_API_KEY=%ANTHROPIC_API_KEY%> .env
+:: Write key to .env file
+(echo ANTHROPIC_API_KEY=%ANTHROPIC_API_KEY%) > .env
 
-:: Start the server
+:: Start Chrome then the server
 echo  Starting J.A.R.V.I.S...
 start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" "http://localhost:5000"
 timeout /t 2 /nobreak >nul
