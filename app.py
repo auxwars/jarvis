@@ -6,12 +6,17 @@ from flask import Flask, render_template, request, jsonify, Response
 from flask_cors import CORS
 import anthropic
 
-# Load .env if it exists and is readable — never crash if it's corrupt
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except Exception:
-    pass
+# Load .env manually — works even if python-dotenv isn't installed
+_env_path = Path(__file__).parent / ".env"
+if _env_path.exists():
+    try:
+        for _line in _env_path.read_text(encoding="utf-8-sig").splitlines():
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _k, _v = _line.split("=", 1)
+                os.environ.setdefault(_k.strip(), _v.strip())
+    except Exception:
+        pass
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
