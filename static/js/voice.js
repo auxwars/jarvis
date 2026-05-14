@@ -207,6 +207,7 @@ class VoiceManager {
     this._shouldRun = false;
     this._mode      = 'wake';
     clearTimeout(this._silTimer);
+    this._gathered  = '';
     if (this.recognition && this.listening) {
       try { this.recognition.stop(); } catch {}
     }

@@ -114,8 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     await sleep(200);
     greet();
-    // Start wake word mode immediately after boot
-    setTimeout(() => voice.startWakeWordMode(), 1500);
   }
 
   function greet() {
@@ -128,10 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     voice.onSpeakEnd = () => {
       hud.setTalking(false);
-      if (!busy) {
-        setTimeout(() => voice.startWakeWordMode(), 400);
-        setStatus('Say "Jarvis" to activate...');
-      }
+      setStatus('READY');
     };
   }
 
@@ -399,11 +394,19 @@ document.addEventListener('DOMContentLoaded', () => {
   voice.onSpeakStart = () => hud.setTalking(true);
   // onSpeakEnd is set inside greet() to restart mic
 
-  // Spacebar = toggle mute (only when not typing)
+  // Spacebar = toggle mic on/off
   document.addEventListener('keydown', (e) => {
     if (e.code === 'Space' && document.activeElement !== $input) {
       e.preventDefault();
-      $mute.click();
+      if (voice._shouldRun) {
+        voice.stopListening();
+        setMicActive(false);
+        setStatus('READY');
+      } else {
+        voice.startListening();
+        setMicActive(true);
+        setStatus('LISTENING...');
+      }
     }
   });
 
