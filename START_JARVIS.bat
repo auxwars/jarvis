@@ -9,7 +9,7 @@ echo  ============================================
 echo.
 
 :: !! PASTE YOUR API KEY BELOW (between the quotes, after the =) !!
-set "ANTHROPIC_API_KEY=PASTE_YOUR_KEY_HERE"
+set "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"
 
 :: Navigate to jarvis folder
 cd /d "%~dp0"
