@@ -16,7 +16,8 @@ cd /d "%~dp0"
 
 :: Start the server
 echo  Starting J.A.R.V.I.S...
-start "" "http://localhost:5000"
+:: Open in Chrome
+start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" "http://localhost:5000"
 timeout /t 2 /nobreak >nul
 python app.py
 
