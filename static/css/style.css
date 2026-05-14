@@ -359,6 +359,141 @@ body::after {
   min-height:14px;
 }
 
+/* ── SIDE FLOATING PANELS (memory + config) ───────────── */
+#mem-panel, #cfg-panel {
+  position:fixed;
+  width:240px;
+  background:rgba(0,10,28,0.93);
+  border:1px solid var(--border);
+  z-index:500;
+  box-shadow:0 0 20px rgba(0,212,255,0.1);
+}
+
+#mem-panel {
+  bottom:145px; left:16px;
+  border-left:3px solid var(--primary);
+}
+
+#cfg-panel {
+  bottom:145px; left:268px;
+  border-left:3px solid var(--accent);
+}
+
+.side-panel-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:6px 10px;
+  border-bottom:1px solid var(--border);
+  background:rgba(0,30,60,0.6);
+  font-family:'Orbitron',monospace;
+  font-size:8px; letter-spacing:3px;
+  color:var(--primary);
+  text-shadow:0 0 8px var(--primary);
+}
+
+#cfg-panel .side-panel-header { color:var(--accent); text-shadow:0 0 8px var(--accent); }
+
+.panel-min-btn {
+  background:transparent; border:none;
+  color:var(--dim); cursor:pointer; font-size:10px; padding:0 4px;
+}
+.panel-min-btn:hover { color:var(--primary); }
+
+/* Memory panel body */
+#mem-body, #cfg-body {
+  padding:8px;
+  max-height:260px;
+  overflow-y:auto;
+  scrollbar-width:thin;
+  scrollbar-color:var(--border) transparent;
+}
+
+#mem-items { margin-bottom:8px; }
+
+.mem-item {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  padding:5px 7px; margin-bottom:4px;
+  border-left:2px solid var(--primary);
+  background:rgba(0,212,255,0.04);
+  gap:6px;
+}
+
+.mem-item-text { flex:1; min-width:0; }
+.mem-item-key  { font-size:8px; color:var(--primary); letter-spacing:2px; text-transform:uppercase; }
+.mem-item-val  { font-size:10px; color:var(--text); margin-top:2px; line-height:1.3; word-break:break-word; }
+
+.mem-del-btn {
+  background:transparent; border:none;
+  color:rgba(255,80,80,0.6); cursor:pointer; font-size:12px;
+  flex-shrink:0; padding:0 2px;
+}
+.mem-del-btn:hover { color:#ff4444; }
+
+#mem-add-row, #mem-forget-row {
+  display:flex; flex-direction:column; gap:4px; margin-bottom:6px;
+}
+
+#mem-add-row input, #mem-forget-row input {
+  background:rgba(0,18,45,0.85);
+  border:1px solid var(--border);
+  border-bottom:1px solid var(--primary);
+  color:var(--primary);
+  padding:5px 8px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px; outline:none;
+  width:100%;
+}
+#mem-add-row input::placeholder,
+#mem-forget-row input::placeholder { color:rgba(0,212,255,0.3); }
+
+.panel-btn {
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--primary);
+  padding:5px 10px; cursor:pointer;
+  font-family:'Orbitron',monospace;
+  font-size:8px; letter-spacing:2px;
+  width:100%; margin-top:2px;
+  transition:all .2s;
+}
+.panel-btn:hover { background:rgba(0,212,255,0.12); border-color:var(--primary); }
+.panel-btn.danger { border-color:rgba(255,80,80,0.4); color:#ff6666; }
+.panel-btn.danger:hover { background:rgba(255,80,80,0.1); border-color:#ff4444; }
+
+/* Config panel */
+.cfg-section {
+  font-family:'Orbitron',monospace;
+  font-size:7px; letter-spacing:3px;
+  color:var(--accent); margin:8px 0 4px;
+  text-transform:uppercase;
+}
+
+.cfg-select {
+  width:100%;
+  background:rgba(0,18,45,0.85);
+  border:1px solid var(--border);
+  border-bottom:1px solid var(--primary);
+  color:var(--primary);
+  padding:5px 8px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px; outline:none;
+}
+.cfg-select option { background:#000d1a; }
+
+.cfg-slider-row {
+  display:flex; align-items:center; gap:6px;
+  font-size:9px; color:var(--dim);
+}
+.cfg-slider-row input[type=range] {
+  flex:1;
+  accent-color:var(--primary);
+}
+
+.cfg-val {
+  font-size:10px; color:var(--primary);
+  text-align:center; margin-bottom:4px;
+  letter-spacing:1px;
+}
+
 /* ── BOOT OVERLAY ─────────────────────────────────────── */
 #boot {
   position:fixed; inset:0;

@@ -16,6 +16,69 @@
   <div id="boot-log"></div>
 </div>
 
+<!-- ── MEMORY PANEL ───────────────────────────────────────── -->
+<div id="mem-panel">
+  <div class="side-panel-header">
+    <span>MEMORY BANK</span>
+    <button class="panel-min-btn" id="mem-minimize">▼</button>
+  </div>
+  <div id="mem-body">
+    <div id="mem-items"></div>
+    <div id="mem-add-row">
+      <input type="text" id="mem-key-input"   placeholder="Category (e.g. hobby)">
+      <input type="text" id="mem-val-input"   placeholder="Fact to remember">
+      <button class="panel-btn" id="mem-add-btn">+ ADD</button>
+    </div>
+    <div id="mem-forget-row">
+      <input type="text" id="mem-forget-input" placeholder="Type key to forget...">
+      <button class="panel-btn danger" id="mem-forget-btn">FORGET</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── CONFIG PANEL ───────────────────────────────────────── -->
+<div id="cfg-panel">
+  <div class="side-panel-header">
+    <span>SETTINGS</span>
+    <button class="panel-min-btn" id="cfg-minimize">▼</button>
+  </div>
+  <div id="cfg-body">
+
+    <div class="cfg-section">PERSONALITY</div>
+    <select id="cfg-personality" class="cfg-select">
+      <option value="sarcastic">Sarcastic &amp; Unhinged (default)</option>
+      <option value="professional">Professional Jarvis</option>
+      <option value="friendly">Friendly &amp; Warm</option>
+      <option value="roast">Full Roast Mode</option>
+      <option value="serious">Serious Only</option>
+    </select>
+
+    <div class="cfg-section">VOICE SPEED</div>
+    <div class="cfg-slider-row">
+      <span>Slow</span>
+      <input type="range" id="cfg-speed" min="0.6" max="1.8" step="0.05" value="1.08">
+      <span>Fast</span>
+    </div>
+    <div class="cfg-val" id="cfg-speed-val">1.08x</div>
+
+    <div class="cfg-section">VOICE PITCH</div>
+    <div class="cfg-slider-row">
+      <span>Low</span>
+      <input type="range" id="cfg-pitch" min="0.5" max="1.5" step="0.05" value="0.92">
+      <span>High</span>
+    </div>
+    <div class="cfg-val" id="cfg-pitch-val">0.92</div>
+
+    <div class="cfg-section">VOICE</div>
+    <select id="cfg-voice" class="cfg-select">
+      <option value="">Auto (Best British)</option>
+    </select>
+
+    <button class="panel-btn" id="cfg-save-btn" style="margin-top:10px;width:100%;">APPLY SETTINGS</button>
+    <button class="panel-btn" id="cfg-test-btn" style="margin-top:5px;width:100%;">TEST VOICE</button>
+  </div>
+</div>
+
 <!-- ── HOMEWORK CORNER PANEL ──────────────────────────────── -->
 <div id="hw-panel">
   <div id="hw-header">

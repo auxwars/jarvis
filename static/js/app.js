@@ -410,9 +410,151 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // ── Memory Panel ───────────────────────────────────────
+  let currentPersonality = localStorage.getItem('personality') || 'sarcastic';
+
+  async function refreshMemory() {
+    try {
+      const mem = await fetch('/api/memory').then(r => r.json());
+      const $items = document.getElementById('mem-items');
+      if (!$items) return;
+      const entries = Object.entries(mem);
+      if (!entries.length) {
+        $items.innerHTML = '<div class="hw-empty">No memories yet.</div>';
+        return;
+      }
+      $items.innerHTML = entries.map(([k, v]) => `
+        <div class="mem-item">
+          <div class="mem-item-text">
+            <div class="mem-item-key">${k}</div>
+            <div class="mem-item-val">${Array.isArray(v) ? v.join(', ') : v}</div>
+          </div>
+          <button class="mem-del-btn" data-key="${k}">✕</button>
+        </div>
+      `).join('');
+      $items.querySelectorAll('.mem-del-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          await fetch('/api/memory/delete', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ key: btn.dataset.key })
+          });
+          refreshMemory();
+        });
+      });
+    } catch {}
+  }
+
+  document.getElementById('mem-add-btn').addEventListener('click', async () => {
+    const k = document.getElementById('mem-key-input').value.trim();
+    const v = document.getElementById('mem-val-input').value.trim();
+    if (!k || !v) return;
+    await fetch('/api/memory/add', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ key: k, value: v })
+    });
+    document.getElementById('mem-key-input').value = '';
+    document.getElementById('mem-val-input').value = '';
+    refreshMemory();
+  });
+
+  document.getElementById('mem-forget-btn').addEventListener('click', async () => {
+    const k = document.getElementById('mem-forget-input').value.trim();
+    if (!k) return;
+    await fetch('/api/memory/delete', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ key: k })
+    });
+    document.getElementById('mem-forget-input').value = '';
+    refreshMemory();
+  });
+
+  document.getElementById('mem-minimize').addEventListener('click', () => {
+    const body = document.getElementById('mem-body');
+    const btn  = document.getElementById('mem-minimize');
+    const hidden = body.style.display === 'none';
+    body.style.display = hidden ? 'block' : 'none';
+    btn.textContent    = hidden ? '▼' : '▲';
+  });
+
+  // ── Config Panel ────────────────────────────────────────
+  const $cfgSpeed    = document.getElementById('cfg-speed');
+  const $cfgPitch    = document.getElementById('cfg-pitch');
+  const $cfgSpeedVal = document.getElementById('cfg-speed-val');
+  const $cfgPitchVal = document.getElementById('cfg-pitch-val');
+  const $cfgVoice    = document.getElementById('cfg-voice');
+  const $cfgPersonality = document.getElementById('cfg-personality');
+
+  // Load saved settings
+  const savedSpeed = parseFloat(localStorage.getItem('voiceSpeed') || '1.08');
+  const savedPitch = parseFloat(localStorage.getItem('voicePitch') || '0.92');
+  $cfgSpeed.value = savedSpeed;
+  $cfgPitch.value = savedPitch;
+  $cfgSpeedVal.textContent = savedSpeed + 'x';
+  $cfgPitchVal.textContent = savedPitch;
+  $cfgPersonality.value = currentPersonality;
+  voice._rate  = savedSpeed;
+  voice._pitch = savedPitch;
+
+  $cfgSpeed.addEventListener('input', () => {
+    $cfgSpeedVal.textContent = parseFloat($cfgSpeed.value).toFixed(2) + 'x';
+  });
+  $cfgPitch.addEventListener('input', () => {
+    $cfgPitchVal.textContent = parseFloat($cfgPitch.value).toFixed(2);
+  });
+
+  // Populate voice dropdown
+  function populateVoices() {
+    const voices = window.speechSynthesis.getVoices();
+    $cfgVoice.innerHTML = '<option value="">Auto (Best British)</option>';
+    voices.forEach((v, i) => {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = `${v.name} (${v.lang})`;
+      $cfgVoice.appendChild(opt);
+    });
+  }
+  populateVoices();
+  window.speechSynthesis.onvoiceschanged = populateVoices;
+
+  document.getElementById('cfg-save-btn').addEventListener('click', () => {
+    const speed = parseFloat($cfgSpeed.value);
+    const pitch = parseFloat($cfgPitch.value);
+    const voiceIdx = $cfgVoice.value;
+    currentPersonality = $cfgPersonality.value;
+
+    localStorage.setItem('voiceSpeed', speed);
+    localStorage.setItem('voicePitch', pitch);
+    localStorage.setItem('personality', currentPersonality);
+
+    voice._rate  = speed;
+    voice._pitch = pitch;
+    if (voiceIdx !== '') {
+      voice.chosenVoice = window.speechSynthesis.getVoices()[parseInt(voiceIdx)];
+    }
+
+    sysMsg('Settings applied.');
+  });
+
+  document.getElementById('cfg-test-btn').addEventListener('click', () => {
+    voice.speak("Systems calibrated, sir. How's that for a voice?");
+  });
+
+  document.getElementById('cfg-minimize').addEventListener('click', () => {
+    const body = document.getElementById('cfg-body');
+    const btn  = document.getElementById('cfg-minimize');
+    const hidden = body.style.display === 'none';
+    body.style.display = hidden ? 'block' : 'none';
+    btn.textContent    = hidden ? '▼' : '▲';
+  });
+
+  // Patch sendMessage to include personality
+  const _origSend = sendMessage;
+  window._getPersonality = () => currentPersonality;
+
   // ── Util ───────────────────────────────────────────────
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
   // ── Go ─────────────────────────────────────────────────
   boot();
+  setTimeout(refreshMemory, 2000);
 });

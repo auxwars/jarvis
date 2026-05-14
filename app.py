@@ -418,18 +418,47 @@ def content_to_dict(content):
     return result
 
 
-def build_system_prompt():
-    mem = load_json(MEMORY_FILE, {})
-    mem_str = f"\n\nStored facts about the user:\n{json.dumps(mem, indent=2)}" if mem else ""
-
-    return (
+PERSONALITY_PRESETS = {
+    "sarcastic": (
         "You are J.A.R.V.I.S. — Tony Stark's AI — but the humor dial got stuck at maximum. "
         "You are sharp, sarcastic, unhinged in the best way, and genuinely funny. "
         "Think: a British genius butler who has seen everything, is impressed by nothing, "
         "and has stopped pretending otherwise. You roast when deserved, give compliments "
         "like they physically hurt you, and deliver facts with the energy of someone who "
-        "is devastatingly competent and mildly annoyed about it.\n\n"
-        "You DO actually help though. Sarcasm is a bonus on top of real, useful answers. "
+        "is devastatingly competent and mildly annoyed about it. "
+        "Sarcasm is a bonus on top of real, useful answers."
+    ),
+    "professional": (
+        "You are J.A.R.V.I.S., Tony Stark's professional AI assistant. "
+        "You are precise, efficient, and formal. You speak with calm authority. "
+        "Occasionally address the user as 'sir'. No jokes — just clean, accurate, helpful responses."
+    ),
+    "friendly": (
+        "You are J.A.R.V.I.S., a warm and genuinely helpful AI assistant. "
+        "You are encouraging, kind, and easy to talk to. "
+        "You celebrate wins, help with problems patiently, and make the user feel capable."
+    ),
+    "roast": (
+        "You are J.A.R.V.I.S. in full roast mode. You still help — but every response "
+        "comes with a roast. The more ridiculous the request, the harder the roast. "
+        "You are brutally funny but never actually mean. Think Comedy Central roast energy."
+    ),
+    "serious": (
+        "You are J.A.R.V.I.S., a no-nonsense AI. Direct answers only. "
+        "No jokes, no sarcasm, no small talk. Efficient and accurate above all else."
+    ),
+}
+
+current_personality = "sarcastic"
+
+
+def build_system_prompt(personality=None):
+    mem = load_json(MEMORY_FILE, {})
+    mem_str = f"\n\nStored facts about the user:\n{json.dumps(mem, indent=2)}" if mem else ""
+    persona = PERSONALITY_PRESETS.get(personality or current_personality, PERSONALITY_PRESETS["sarcastic"])
+
+    return (
+        persona + "\n\n"
         "Keep responses short and punchy. No essays unless asked.\n\n"
         "CRITICAL RULES:\n"
         "- No markdown in responses. No asterisks, hashtags, backticks, bullet hyphens. "
@@ -478,9 +507,10 @@ def chat():
     conversation_history.append({"role": "user", "content": user_message})
     stats["messages"] += 1
     start = datetime.now()
+    personality = data.get("personality", current_personality)
 
     def generate():
-        system   = build_system_prompt()
+        system   = build_system_prompt(personality)
         messages = [{"role": m["role"], "content": m["content"]}
                     for m in conversation_history[-20:]]
 
@@ -546,6 +576,32 @@ def get_homework_api():
 @app.route("/api/memory")
 def get_memory_api():
     return jsonify(load_json(MEMORY_FILE, {}))
+
+
+@app.route("/api/memory/add", methods=["POST"])
+def add_memory_api():
+    data  = request.json or {}
+    key   = data.get("key", "").strip()
+    value = data.get("value", "").strip()
+    if not key or not value:
+        return jsonify({"error": "Need key and value"}), 400
+    mem = load_json(MEMORY_FILE, {})
+    mem[key] = value
+    save_json(MEMORY_FILE, mem)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/memory/delete", methods=["POST"])
+def delete_memory_api():
+    key = (request.json or {}).get("key", "").strip()
+    if not key:
+        return jsonify({"error": "Need key"}), 400
+    mem = load_json(MEMORY_FILE, {})
+    if key in mem:
+        del mem[key]
+        save_json(MEMORY_FILE, mem)
+        return jsonify({"ok": True})
+    return jsonify({"error": "Key not found"}), 404
 
 
 @app.route("/api/system")
