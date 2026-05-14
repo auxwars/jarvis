@@ -17,6 +17,11 @@ cd /d "%~dp0"
 :: Write a clean .env file every time
 echo ANTHROPIC_API_KEY=%ANTHROPIC_API_KEY%> .env
 
+:: Pull latest updates automatically
+echo  Checking for updates...
+git pull
+echo.
+
 :: Start the server
 echo  Starting J.A.R.V.I.S...
 start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" "http://localhost:5000"
